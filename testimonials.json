@@ -1,0 +1,86 @@
+[
+  {
+    "date": "2024-01-15",
+    "reviewType": "Demo Feedback Review",
+    "review": "This is a sample testimonial to test the widget functionality. The design should look exactly like the React version.",
+    "rating": 5,
+    "name": "John Doe"
+  },
+  {
+    "date": "2024-01-14",
+    "reviewType": "Sales Review",
+    "review": "Another sample testimonial to demonstrate the scrolling animation and responsive design.",
+    "rating": 4,
+    "name": "Jane Smith"
+  },
+  {
+    "date": "2024-01-13",
+    "reviewType": "Support Review",
+    "review": "This testimonial shows how the widget handles different review types with proper styling.",
+    "rating": 5,
+    "name": "Mike Johnson"
+  },
+  {
+    "date": "2024-01-12",
+    "reviewType": "Course Review",
+    "review": "Sample data to test the widget while we resolve the CORS issue with Google Sheets.",
+    "rating": 4,
+    "name": "Sarah Wilson"
+  },
+  {
+    "date": "2024-01-11",
+    "reviewType": "Demo Feedback Review",
+    "review": "This is another sample testimonial to fill the columns and test the scrolling animation.",
+    "rating": 5,
+    "name": "David Brown"
+  },
+  {
+    "date": "2024-01-10",
+    "reviewType": "Sales Review",
+    "review": "More sample data to test the responsive design and hover functionality.",
+    "rating": 4,
+    "name": "Lisa Davis"
+  },
+  {
+    "date": "2024-01-09",
+    "reviewType": "Support Review",
+    "review": "Additional testimonial to ensure we have enough content for all three columns on desktop.",
+    "rating": 5,
+    "name": "Alex Chen"
+  },
+  {
+    "date": "2024-01-08",
+    "reviewType": "Course Review",
+    "review": "This testimonial demonstrates the course review category with proper styling and formatting.",
+    "rating": 4,
+    "name": "Maria Garcia"
+  },
+  {
+    "date": "2024-01-07",
+    "reviewType": "Demo Feedback Review",
+    "review": "Final testimonial to complete the set and test the full functionality of the widget.",
+    "rating": 5,
+    "name": "Robert Taylor"
+  },
+  {
+    "date": "2024-01-06",
+    "reviewType": "Sales Review",
+    "review": "This testimonial showcases the sales review category with excellent customer feedback.",
+    "rating": 5,
+    "name": "Emily Rodriguez"
+  },
+  {
+    "date": "2024-01-05",
+    "reviewType": "Support Review",
+    "review": "Great support experience that demonstrates our commitment to customer satisfaction.",
+    "rating": 4,
+    "name": "James Wilson"
+  },
+  {
+    "date": "2024-01-04",
+    "reviewType": "Course Review",
+    "review": "Outstanding course content that helped me advance my career significantly.",
+    "rating": 5,
+    "name": "Amanda Thompson"
+  }
+]
