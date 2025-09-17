@@ -139,10 +139,24 @@ function parseCSV(csv: string): string[][] {
 // Simple client loader component
 function useTestimonials() {
   const [items, setItems] = React.useState<Testimonial[] | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  
   React.useEffect(() => {
-    fetchTestimonials().then(setItems).catch(() => setItems([]));
+    console.log('useTestimonials: Starting to fetch...');
+    fetchTestimonials()
+      .then((data) => {
+        console.log('useTestimonials: Data received:', data.length, 'items');
+        setItems(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('useTestimonials: Error:', error);
+        setItems([]);
+        setLoading(false);
+      });
   }, []);
-  return items;
+  
+  return { items, loading };
 }
 
 function badgeClass(type?: string): string {
@@ -155,7 +169,7 @@ function badgeClass(type?: string): string {
 }
 
 const Testimonials: React.FC = () => {
-  const items = useTestimonials();
+  const { items, loading } = useTestimonials();
   const testimonials = items ?? [];
   const allTypes = React.useMemo(
     () => Array.from(new Set(testimonials.map((t) => t.reviewType).filter(Boolean))),
@@ -186,6 +200,22 @@ const Testimonials: React.FC = () => {
   const thirdColumn = filtered.slice(6, 9);
 
   const [paused, setPaused] = React.useState(false);
+
+  if (loading) {
+    return (
+      <section className="bg-white text-neutral-900 my-20 relative">
+        <div className="container z-10 mx-auto">
+          <div className="flex flex-col items-center justify-center max-w-[540px] mx-auto">
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+              <h2 className="text-xl font-bold mb-2">Loading Testimonials...</h2>
+              <p className="text-neutral-600">Fetching data from Google Sheets...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-white text-neutral-900 my-20 relative">
