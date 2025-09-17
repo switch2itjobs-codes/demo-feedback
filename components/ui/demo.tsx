@@ -4,10 +4,81 @@ import { TestimonialsColumn, Testimonial } from "@/components/ui/testimonials-co
 import { motion } from "motion/react";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
-  const res = await fetch("/api/testimonials", { cache: "no-store" });
-  if (!res.ok) return [];
-  const json = await res.json();
-  return json.items as Testimonial[];
+  try {
+    // Direct fetch from Google Sheets CSV
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-wMC9rUlK_9puyxAvZp0revilMFgeG8fgeGLA58mIjRHa7TKqHLL-5J3RM-4bKtvtiPLi4ZMurT65/pub?gid=0&single=true&output=csv';
+    
+    const res = await fetch(csvUrl);
+    if (!res.ok) return [];
+    
+    const csv = await res.text();
+    const rows = parseCSV(csv).filter(r => r.length > 0);
+    
+    const testimonials = rows
+      .slice(1) // Skip header
+      .filter(r => r[0] || r[1] || r[2] || r[3] || r[4])
+      .map(r => ({
+        date: r[0] || "",
+        reviewType: r[1] || "",
+        review: r[2] || "",
+        rating: Number(r[3]) || 0,
+        name: r[4] || ""
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 9);
+
+    return testimonials;
+  } catch (error) {
+    console.error('Error fetching testimonials:', error);
+    return [];
+  }
+}
+
+// CSV Parser function
+function parseCSV(csv: string): string[][] {
+  const rows: string[][] = [];
+  let current: string[] = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+    const next = csv[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && next === '"') {
+        field += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        field += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        current.push(field.trim());
+        field = "";
+      } else if (char === '\n') {
+        current.push(field.trim());
+        rows.push(current);
+        current = [];
+        field = "";
+      } else if (char === '\r') {
+        // ignore
+      } else {
+        field += char;
+      }
+    }
+  }
+
+  if (field.length > 0 || current.length > 0) {
+    current.push(field.trim());
+    rows.push(current);
+  }
+
+  return rows;
 }
 
 // Simple client loader component

@@ -6,12 +6,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true
   },
-  experimental: {
-    turbopack: {
-      // Ensure the project root is the web folder when multiple lockfiles exist
-      root: __dirname,
-    },
-  },
 };
 
 export default nextConfig;
