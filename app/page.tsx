@@ -1,5 +1,5 @@
-import TestPage from "./test-page";
+import Testimonials from "@/components/ui/demo";
 
 export default function Home() {
-  return <TestPage />;
+  return <Testimonials />;
 }

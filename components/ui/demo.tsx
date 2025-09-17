@@ -5,14 +5,22 @@ import { motion } from "motion/react";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
+    console.log('Starting to fetch testimonials...');
     // Direct fetch from Google Sheets CSV
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-wMC9rUlK_9puyxAvZp0revilMFgeG8fgeGLA58mIjRHa7TKqHLL-5J3RM-4bKtvtiPLi4ZMurT65/pub?gid=0&single=true&output=csv';
     
     const res = await fetch(csvUrl);
-    if (!res.ok) return [];
+    console.log('Response status:', res.status);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
     
     const csv = await res.text();
+    console.log('CSV data received:', csv.substring(0, 200));
+    
     const rows = parseCSV(csv).filter(r => r.length > 0);
+    console.log('Parsed rows:', rows.length);
     
     const testimonials = rows
       .slice(1) // Skip header
@@ -27,10 +35,57 @@ async function fetchTestimonials(): Promise<Testimonial[]> {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 9);
 
+    console.log('Processed testimonials:', testimonials.length);
     return testimonials;
   } catch (error) {
     console.error('Error fetching testimonials:', error);
-    return [];
+    
+    // Return fallback data for testing
+    console.log('Using fallback data...');
+    return [
+      {
+        date: "2024-01-15",
+        reviewType: "Demo Feedback Review",
+        review: "This is a sample testimonial to test the widget functionality. The design should look exactly like the React version.",
+        rating: 5,
+        name: "John Doe"
+      },
+      {
+        date: "2024-01-14",
+        reviewType: "Sales Review",
+        review: "Another sample testimonial to demonstrate the scrolling animation and responsive design.",
+        rating: 4,
+        name: "Jane Smith"
+      },
+      {
+        date: "2024-01-13",
+        reviewType: "Support Review",
+        review: "This testimonial shows how the widget handles different review types with proper styling.",
+        rating: 5,
+        name: "Mike Johnson"
+      },
+      {
+        date: "2024-01-12",
+        reviewType: "Course Review",
+        review: "Sample data to test the widget while we resolve the CORS issue with Google Sheets.",
+        rating: 4,
+        name: "Sarah Wilson"
+      },
+      {
+        date: "2024-01-11",
+        reviewType: "Demo Feedback Review",
+        review: "This is another sample testimonial to fill the columns and test the scrolling animation.",
+        rating: 5,
+        name: "David Brown"
+      },
+      {
+        date: "2024-01-10",
+        reviewType: "Sales Review",
+        review: "More sample data to test the responsive design and hover functionality.",
+        rating: 4,
+        name: "Lisa Davis"
+      }
+    ];
   }
 }
 
