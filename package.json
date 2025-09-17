@@ -10,7 +10,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d out"
   },
-  "homepage": "https://switch2itjobs-codes.github.io/demo-feedback",
+  "homepage": "https://switch2itjobs-codes.github.io/demo-feedback/",
   "dependencies": {
     "@radix-ui/react-avatar": "1.1.10",
     "@radix-ui/react-slot": "1.2.3",

@@ -2,7 +2,7 @@
 import React from "react";
 
 export default function TestPage() {
-  const [testimonials, setTestimonials] = React.useState<any[]>([]);
+  const [testimonials, setTestimonials] = React.useState<Array<{date: string, reviewType: string, review: string, rating: number, name: string}>>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
