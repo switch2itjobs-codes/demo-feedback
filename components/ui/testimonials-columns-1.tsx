@@ -101,7 +101,7 @@ export const TestimonialsColumn: React.FC<TestimonialsColumnProps> = (
   }
 
   return (
-    <div className={props.className}>
+    <div className={`flex flex-col gap-6 pb-6 bg-white ${props.className || ''}`}>
       <motion.div
         animate={props.paused ? undefined : { translateY: "-50%" }}
         transition={props.paused ? undefined : {
@@ -111,7 +111,7 @@ export const TestimonialsColumn: React.FC<TestimonialsColumnProps> = (
           repeatType: "loop",
         }}
         style={props.paused ? { transform: "translateY(0%)" } : undefined}
-        className="flex flex-col gap-6 pb-6 bg-white"
+        className="flex flex-col gap-6 pb-6"
       >
         {[...new Array(2)].map((_, index) => (
           <React.Fragment key={index}>
@@ -145,7 +145,13 @@ export const TestimonialsColumn: React.FC<TestimonialsColumnProps> = (
                   </Avatar>
                   <div className="flex flex-col">
                     <div className="font-medium tracking-tight leading-5 text-neutral-900">{name}</div>
-                    <div className="leading-5 tracking-tight text-neutral-500">{new Date(date).toLocaleDateString()}</div>
+                    <div className="leading-5 tracking-tight text-neutral-500">
+                      {new Date(date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>

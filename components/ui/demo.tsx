@@ -6,37 +6,25 @@ import { motion } from "motion/react";
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
     console.log('Starting to fetch testimonials...');
-    // Direct fetch from Google Sheets CSV
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-wMC9rUlK_9puyxAvZp0revilMFgeG8fgeGLA58mIjRHa7TKqHLL-5J3RM-4bKtvtiPLi4ZMurT65/pub?gid=0&single=true&output=csv';
     
-    const res = await fetch(csvUrl);
+    // Use static JSON file for reliable deployment
+    const res = await fetch('/testimonials.json');
     console.log('Response status:', res.status);
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const csv = await res.text();
-    console.log('CSV data received:', csv.substring(0, 200));
+    const testimonials = await res.json();
+    console.log('Testimonials loaded:', testimonials.length);
     
-    const rows = parseCSV(csv).filter(r => r.length > 0);
-    console.log('Parsed rows:', rows.length);
-    
-    const testimonials = rows
-      .slice(1) // Skip header
-      .filter(r => r[0] || r[1] || r[2] || r[3] || r[4])
-      .map(r => ({
-        date: r[0] || "",
-        reviewType: r[1] || "",
-        review: r[2] || "",
-        rating: Number(r[3]) || 0,
-        name: r[4] || ""
-      }))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    // Sort by date (latest first) and limit to 9
+    const sortedTestimonials = testimonials
+      .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 9);
 
-    console.log('Processed testimonials:', testimonials.length);
-    return testimonials;
+    console.log('Processed testimonials:', sortedTestimonials.length);
+    return sortedTestimonials;
   } catch (error) {
     console.error('Error fetching testimonials:', error);
     
@@ -84,57 +72,32 @@ async function fetchTestimonials(): Promise<Testimonial[]> {
         review: "More sample data to test the responsive design and hover functionality.",
         rating: 4,
         name: "Lisa Davis"
+      },
+      {
+        date: "2024-01-09",
+        reviewType: "Support Review",
+        review: "Additional testimonial to ensure we have enough content for all three columns on desktop.",
+        rating: 5,
+        name: "Alex Chen"
+      },
+      {
+        date: "2024-01-08",
+        reviewType: "Course Review",
+        review: "This testimonial demonstrates the course review category with proper styling and formatting.",
+        rating: 4,
+        name: "Maria Garcia"
+      },
+      {
+        date: "2024-01-07",
+        reviewType: "Demo Feedback Review",
+        review: "Final testimonial to complete the set and test the full functionality of the widget.",
+        rating: 5,
+        name: "Robert Taylor"
       }
     ];
   }
 }
 
-// CSV Parser function
-function parseCSV(csv: string): string[][] {
-  const rows: string[][] = [];
-  let current: string[] = [];
-  let field = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < csv.length; i++) {
-    const char = csv[i];
-    const next = csv[i + 1];
-
-    if (inQuotes) {
-      if (char === '"' && next === '"') {
-        field += '"';
-        i++;
-      } else if (char === '"') {
-        inQuotes = false;
-      } else {
-        field += char;
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-      } else if (char === ',') {
-        current.push(field.trim());
-        field = "";
-      } else if (char === '\n') {
-        current.push(field.trim());
-        rows.push(current);
-        current = [];
-        field = "";
-      } else if (char === '\r') {
-        // ignore
-      } else {
-        field += char;
-      }
-    }
-  }
-
-  if (field.length > 0 || current.length > 0) {
-    current.push(field.trim());
-    rows.push(current);
-  }
-
-  return rows;
-}
 
 // Simple client loader component
 function useTestimonials() {
@@ -178,6 +141,12 @@ const Testimonials: React.FC = () => {
 
   type Selection = "ALL" | string;
   const [selected, setSelected] = React.useState<Selection>("ALL");
+  const [mounted, setMounted] = React.useState(false);
+
+  // Fix hydration issues
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filtered = React.useMemo(() => {
     let result = testimonials;
@@ -200,6 +169,23 @@ const Testimonials: React.FC = () => {
   const thirdColumn = filtered.slice(6, 9);
 
   const [paused, setPaused] = React.useState(false);
+
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <section className="bg-white text-neutral-900 my-20 relative">
+        <div className="container z-10 mx-auto">
+          <div className="flex flex-col items-center justify-center max-w-[540px] mx-auto">
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+              <h2 className="text-xl font-bold mb-2">Loading Testimonials...</h2>
+              <p className="text-neutral-600">Preparing content...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (loading) {
     return (

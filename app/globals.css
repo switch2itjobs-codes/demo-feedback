@@ -19,3 +19,38 @@ body {
   color: #0a0a0a;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Review form field labels */
+.review-form-label {
+  display: block;
+  color: rgb(255 255 255 / 0.8);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+/* Review form inputs - force dark theme */
+.review-form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white !important;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.review-form-input:focus {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.4);
+  outline: none;
+}
+
+.review-form-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
