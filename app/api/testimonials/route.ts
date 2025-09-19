@@ -89,7 +89,7 @@ export async function GET() {
         "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=60",
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }
 }

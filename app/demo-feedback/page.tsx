@@ -2,94 +2,28 @@
 
 import React from "react";
 import { Star, Send } from "lucide-react";
-import { Button } from "@/components/ui/shadcn-button";
 import { TestimonialsColumn, Testimonial } from "@/components/ui/testimonials-columns-1";
-import { motion } from "motion/react";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
-    const res = await fetch('/testimonials.json');
+    const res = await fetch('/api/testimonials');
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const testimonials = await res.json();
+    const data = await res.json();
     
     // Include all reviews and sort by date (latest first)
-    const allTestimonials = testimonials
+    const allTestimonials = data.items
       .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 9);
 
     return allTestimonials;
   } catch (error) {
-    console.error('Error fetching testimonials:', error);
+    console.error('Error fetching testimonials from Google Sheets:', error);
     
-    // Return fallback data with all review types
-    return [
-      {
-        date: "2024-01-15",
-        reviewType: "Demo Feedback Review",
-        review: "The demo session was incredibly helpful! The instructor explained everything clearly and answered all my questions. I feel much more confident about the course now.",
-        rating: 5,
-        name: "Sarah Johnson"
-      },
-      {
-        date: "2024-01-14",
-        reviewType: "Course Review",
-        review: "Excellent course! The hands-on approach really helped me understand the concepts. The instructor was very knowledgeable and patient.",
-        rating: 5,
-        name: "Michael Chen"
-      },
-      {
-        date: "2024-01-13",
-        reviewType: "Support Review",
-        review: "Great support team! They helped me resolve my technical issues quickly and were very professional throughout the process.",
-        rating: 4,
-        name: "Emily Rodriguez"
-      },
-      {
-        date: "2024-01-12",
-        reviewType: "Sales Review",
-        review: "The sales team was very helpful in explaining the course details and helped me choose the right program for my career goals.",
-        rating: 5,
-        name: "David Kim"
-      },
-      {
-        date: "2024-01-11",
-        reviewType: "Demo Feedback Review",
-        review: "The demo exceeded my expectations. The instructor's teaching style is perfect for beginners. Can't wait to enroll!",
-        rating: 5,
-        name: "Lisa Wang"
-      },
-      {
-        date: "2024-01-10",
-        reviewType: "Course Review",
-        review: "Amazing course content! The practical examples really helped me understand the concepts. Highly recommend this program!",
-        rating: 5,
-        name: "Alex Thompson"
-      },
-      {
-        date: "2024-01-09",
-        reviewType: "Support Review",
-        review: "Great support experience! The team was responsive and helped me with all my questions. Very satisfied with the service.",
-        rating: 4,
-        name: "Maria Garcia"
-      },
-      {
-        date: "2024-01-08",
-        reviewType: "Sales Review",
-        review: "Excellent sales process! The team explained everything clearly and helped me make the right decision for my career.",
-        rating: 5,
-        name: "James Wilson"
-      },
-      {
-        date: "2024-01-07",
-        reviewType: "Demo Feedback Review",
-        review: "Outstanding demo! The hands-on approach made everything clear. Can't wait to start the full course.",
-        rating: 5,
-        name: "Anna Davis"
-      }
-    ];
+    // Return empty array instead of dummy data
+    return [];
   }
 }
 

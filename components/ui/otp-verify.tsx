@@ -5,7 +5,7 @@ import { useState, useRef } from "react"
 
 export function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", ""])
-  const [isLoading, setIsLoading] = useState(false)
+  const [, ] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const handleChange = (index: number, value: string) => {
@@ -26,16 +26,16 @@ export function OTPVerification() {
     }
   }
 
-  const handleVerify = async () => {
-    const otpCode = otp.join("")
-    if (otpCode.length !== 4) return
+  // const handleVerify = async () => {
+  //   const otpCode = otp.join("")
+  //   if (otpCode.length !== 4) return
 
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
+  //   setIsLoading(true)
+  //   await new Promise((resolve) => setTimeout(resolve, 2000))
+  //   setIsLoading(false)
 
-    console.log("OTP verified:", otpCode)
-  }
+  //   console.log("OTP verified:", otpCode)
+  // }
 
   const handleResend = () => {
     console.log("Resending OTP...")
@@ -72,7 +72,7 @@ export function OTPVerification() {
             {otp.map((digit, index) => (
               <div key={index} className="relative">
                 <input
-                  ref={(el) => (inputRefs.current[index] = el)}
+                  ref={(el) => { inputRefs.current[index] = el }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
@@ -87,7 +87,7 @@ export function OTPVerification() {
           </div>
 
           <div className="text-center mb-8">
-            <span className="text-white/60 text-sm">Didn't get the code? </span>
+            <span className="text-white/60 text-sm">Didn&apos;t get the code? </span>
             <button
               onClick={handleResend}
               className="text-white/80 hover:text-white text-sm font-medium transition-colors duration-200"

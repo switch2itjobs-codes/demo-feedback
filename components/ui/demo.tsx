@@ -5,96 +5,32 @@ import { motion } from "motion/react";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
-    console.log('Starting to fetch testimonials...');
+    console.log('Starting to fetch testimonials from Google Sheets...');
     
-    // Use static JSON file for reliable deployment
-    const res = await fetch('/testimonials.json');
+    // Use Google Sheets API route
+    const res = await fetch('/api/testimonials');
     console.log('Response status:', res.status);
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const testimonials = await res.json();
-    console.log('Testimonials loaded:', testimonials.length);
+    const data = await res.json();
+    console.log('Testimonials loaded:', data.items.length);
     
     // Sort by date (latest first) and limit to 9
-    const sortedTestimonials = testimonials
+    const sortedTestimonials = data.items
       .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 9);
 
     console.log('Processed testimonials:', sortedTestimonials.length);
     return sortedTestimonials;
   } catch (error) {
-    console.error('Error fetching testimonials:', error);
+    console.error('Error fetching testimonials from Google Sheets:', error);
     
-    // Return fallback data for testing
-    console.log('Using fallback data...');
-    return [
-      {
-        date: "2024-01-15",
-        reviewType: "Demo Feedback Review",
-        review: "This is a sample testimonial to test the widget functionality. The design should look exactly like the React version.",
-        rating: 5,
-        name: "John Doe"
-      },
-      {
-        date: "2024-01-14",
-        reviewType: "Sales Review",
-        review: "Another sample testimonial to demonstrate the scrolling animation and responsive design.",
-        rating: 4,
-        name: "Jane Smith"
-      },
-      {
-        date: "2024-01-13",
-        reviewType: "Support Review",
-        review: "This testimonial shows how the widget handles different review types with proper styling.",
-        rating: 5,
-        name: "Mike Johnson"
-      },
-      {
-        date: "2024-01-12",
-        reviewType: "Course Review",
-        review: "Sample data to test the widget while we resolve the CORS issue with Google Sheets.",
-        rating: 4,
-        name: "Sarah Wilson"
-      },
-      {
-        date: "2024-01-11",
-        reviewType: "Demo Feedback Review",
-        review: "This is another sample testimonial to fill the columns and test the scrolling animation.",
-        rating: 5,
-        name: "David Brown"
-      },
-      {
-        date: "2024-01-10",
-        reviewType: "Sales Review",
-        review: "More sample data to test the responsive design and hover functionality.",
-        rating: 4,
-        name: "Lisa Davis"
-      },
-      {
-        date: "2024-01-09",
-        reviewType: "Support Review",
-        review: "Additional testimonial to ensure we have enough content for all three columns on desktop.",
-        rating: 5,
-        name: "Alex Chen"
-      },
-      {
-        date: "2024-01-08",
-        reviewType: "Course Review",
-        review: "This testimonial demonstrates the course review category with proper styling and formatting.",
-        rating: 4,
-        name: "Maria Garcia"
-      },
-      {
-        date: "2024-01-07",
-        reviewType: "Demo Feedback Review",
-        review: "Final testimonial to complete the set and test the full functionality of the widget.",
-        rating: 5,
-        name: "Robert Taylor"
-      }
-    ];
+    // Return empty array instead of dummy data
+    console.log('No testimonials available from Google Sheets');
+    return [];
   }
 }
 
@@ -223,7 +159,7 @@ const Testimonials: React.FC = () => {
             What our users say
           </h2>
           <p className="text-center mt-5 text-neutral-600 whitespace-nowrap overflow-hidden text-ellipsis text-sm sm:text-base">
-            Our Student experiences captured from demos, training, and ongoing support
+            Our student experiences captured from demos, training, and ongoing support
           </p>
         </motion.div>
 
