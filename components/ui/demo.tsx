@@ -5,21 +5,36 @@ import { motion } from "motion/react";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
-    console.log('Starting to fetch testimonials from Google Sheets...');
+    console.log('Fetching testimonials directly from Google Sheets...');
     
-    // Use Google Sheets API route
-    const res = await fetch('/api/testimonials');
-    console.log('Response status:', res.status);
+    // Fetch directly from Google Sheets CSV
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS-wMC9rUlK_9puyxAvZp0revilMFgeG8fgeGLA58mIjRHa7TKqHLL-5J3RM-4bKtvtiPLi4ZMurT65/pub?gid=0&single=true&output=csv";
     
+    const res = await fetch(csvUrl);
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const data = await res.json();
-    console.log('Testimonials loaded:', data.items.length);
+    const csv = await res.text();
+    console.log('CSV data received, length:', csv.length);
+    
+    // Parse CSV data
+    const rows = csv.split('\n').filter(row => row.trim());
+    const data = rows.slice(1).map(row => {
+      const [date, reviewType, review, rating, name] = row.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+      return {
+        date: date || '',
+        reviewType: reviewType || '',
+        review: review || '',
+        rating: Number(rating) || 0,
+        name: name || ''
+      };
+    }).filter(item => item.name && item.review);
+    
+    console.log('Parsed testimonials:', data.length);
     
     // Sort by date (latest first) and limit to 9
-    const sortedTestimonials = data.items
+    const sortedTestimonials = data
       .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 9);
 
