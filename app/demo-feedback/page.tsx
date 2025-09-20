@@ -113,37 +113,71 @@ export default function DemoFeedbackPage() {
     setIsSubmitting(true);
     
     try {
-      // Submit to Google Apps Script Web App
-      const response = await fetch(GOOGLE_SHEETS_CONFIG.WEB_APP_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          review: review,
-          rating: rating,
-          name: name,
-          mobile: mobile
-        })
-      });
+      // Try Google Apps Script first, fallback to local API
+      let response;
+      let result;
       
-      const result = await response.json();
-      
-      if (result.success) {
-        // Reset form
-        setRating(0);
-        setReview("");
-        setName("");
-        setMobile("");
+      try {
+        // Submit to Google Apps Script Web App
+        response = await fetch(GOOGLE_SHEETS_CONFIG.WEB_APP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            review: review,
+            rating: rating,
+            name: name,
+            mobile: mobile
+          })
+        });
         
-        alert("Thank you for your feedback! Your review has been submitted and will appear shortly.");
+        result = await response.json();
         
-        // Refresh testimonials to show the new review
-        const newTestimonials = await fetchTestimonials();
-        setItems(newTestimonials);
-      } else {
-        throw new Error(result.message || 'Failed to submit review');
+        if (!result.success) {
+          throw new Error(result.message || 'Google Apps Script failed');
+        }
+        
+        console.log('Review submitted via Google Apps Script:', result);
+        
+      } catch (googleError) {
+        console.log('Google Apps Script not available, using fallback API:', googleError);
+        
+        // Fallback to local API route
+        response = await fetch('/api/submit-review', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            review: review,
+            rating: rating,
+            name: name,
+            mobile: mobile
+          })
+        });
+        
+        result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to submit review');
+        }
+        
+        console.log('Review submitted via fallback API:', result);
       }
+      
+      // Reset form
+      setRating(0);
+      setReview("");
+      setName("");
+      setMobile("");
+      
+      alert("Thank you for your feedback! Your review has been submitted and will appear shortly.");
+      
+      // Refresh testimonials to show the new review
+      const newTestimonials = await fetchTestimonials();
+      setItems(newTestimonials);
+      
     } catch (error) {
       console.error('Error submitting review:', error);
       alert("Sorry, there was an error submitting your review. Please try again.");
