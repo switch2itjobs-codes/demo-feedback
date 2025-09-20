@@ -175,8 +175,8 @@ export default function DemoFeedbackPage() {
       alert("Thank you for your feedback! Your review has been submitted and will appear shortly.");
       
       // Refresh testimonials to show the new review
-      const newTestimonials = await fetchTestimonials();
-      setItems(newTestimonials);
+      // Note: Testimonials will refresh automatically on next page load
+      console.log('Review submitted successfully, testimonials will refresh on next load');
       
     } catch (error) {
       console.error('Error submitting review:', error);
