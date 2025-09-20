@@ -18,10 +18,33 @@ async function fetchTestimonials(): Promise<Testimonial[]> {
     const csv = await res.text();
     console.log('CSV data received, length:', csv.length);
     
-    // Parse CSV data
+    // Parse CSV data - handle commas in review text properly
     const rows = csv.split('\n').filter(row => row.trim());
     const data = rows.slice(1).map(row => {
-      const [date, reviewType, review, rating, name] = row.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+      // Split by comma but handle quoted fields properly
+      const fields = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          fields.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      fields.push(current.trim()); // Add the last field
+      
+      // Remove quotes from each field
+      const cleanFields = fields.map(field => field.replace(/^"|"$/g, ''));
+      
+      // Expected: Date, Review Type, Review, Rating, Name, Mobile Number
+      const [date, reviewType, review, rating, name, mobile] = cleanFields;
+      
       return {
         date: date || '',
         reviewType: reviewType || '',
