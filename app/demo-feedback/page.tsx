@@ -3,13 +3,14 @@
 import React from "react";
 import { Star, Send } from "lucide-react";
 import { TestimonialsColumn, Testimonial } from "@/components/ui/testimonials-columns-1";
+import { GOOGLE_SHEETS_CONFIG } from "@/config/google-sheets";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
     console.log('Fetching testimonials directly from Google Sheets...');
     
     // Fetch directly from Google Sheets CSV
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS-wMC9rUlK_9puyxAvZp0revilMFgeG8fgeGLA58mIjRHa7TKqHLL-5J3RM-4bKtvtiPLi4ZMurT65/pub?gid=0&single=true&output=csv";
+    const csvUrl = GOOGLE_SHEETS_CONFIG.CSV_URL;
     
     const res = await fetch(csvUrl);
     if (!res.ok) {
@@ -111,17 +112,44 @@ export default function DemoFeedbackPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Reset form
-    setRating(0);
-    setReview("");
-    setName("");
-    setMobile("");
-    setIsSubmitting(false);
-    
-    alert("Thank you for your feedback! Your review has been submitted.");
+    try {
+      // Submit to Google Apps Script Web App
+      const response = await fetch(GOOGLE_SHEETS_CONFIG.WEB_APP_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          review: review,
+          rating: rating,
+          name: name,
+          mobile: mobile
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Reset form
+        setRating(0);
+        setReview("");
+        setName("");
+        setMobile("");
+        
+        alert("Thank you for your feedback! Your review has been submitted and will appear shortly.");
+        
+        // Refresh testimonials to show the new review
+        const newTestimonials = await fetchTestimonials();
+        setItems(newTestimonials);
+      } else {
+        throw new Error(result.message || 'Failed to submit review');
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert("Sorry, there was an error submitting your review. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const firstColumn = testimonials.slice(0, 5);
