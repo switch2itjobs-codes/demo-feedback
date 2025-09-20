@@ -143,8 +143,8 @@ export default function DemoFeedbackPage() {
       } catch (googleError) {
         console.log('Google Apps Script not available, using fallback API:', googleError);
         
-        // Fallback to local API route
-        response = await fetch('/api/submit-review', {
+        // Fallback to local API route that prepares data for Google Sheets
+        response = await fetch('/api/write-to-sheets', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
