@@ -30,8 +30,17 @@ export async function GET() {
         
         if (response.ok) {
           csvData = await response.text();
+          
+          // Check if we got HTML instead of CSV (indicates sheet not accessible)
+          if (csvData.trim().startsWith('<') || csvData.includes('<!DOCTYPE') || csvData.includes('<html')) {
+            console.log('Received HTML instead of CSV from:', url, '- Sheet may not be publicly accessible');
+            continue;
+          }
+          
           workingUrl = url;
-          console.log('Successfully fetched data from:', url);
+          console.log('Successfully fetched CSV data from:', url);
+          console.log('CSV data length:', csvData.length, 'characters');
+          console.log('First 200 chars:', csvData.substring(0, 200));
           break;
         } else {
           console.log('Failed to fetch from:', url, 'Status:', response.status);
@@ -115,23 +124,60 @@ export async function GET() {
       mobile: string;
     }>;
 
+    // Log parsing stats
+    console.log(`Total rows parsed from CSV: ${rows.length}`);
+    console.log('First row (header):', rows[0]);
+    
     // Expect header in first row; start from index 1
+    let skippedCount = 0;
+    let skippedReasons: { [key: string]: number } = {};
+    
     for (let i = 1; i < rows.length; i++) {
       const fields = rows[i];
-      if (!fields || fields.length < 6) continue;
+      
+      // Skip empty rows
+      if (!fields || fields.length === 0) {
+        skippedCount++;
+        skippedReasons['empty_row'] = (skippedReasons['empty_row'] || 0) + 1;
+        continue;
+      }
+      
+      // Log rows with unexpected field counts for debugging
+      if (fields.length < 6) {
+        skippedCount++;
+        const reason = `fields_count_${fields.length}`;
+        skippedReasons[reason] = (skippedReasons[reason] || 0) + 1;
+        if (i <= 5) { // Log first 5 problematic rows for debugging
+          console.log(`Row ${i} skipped - only ${fields.length} fields:`, fields);
+        }
+        continue;
+      }
 
       const testimonial = {
-        date: fields[0] || '',
-        reviewType: fields[1] || '',
-        review: fields[2] || '',
-        rating: parseInt(fields[3]) || 0,
-        name: fields[4] || '',
-        mobile: fields[5] || ''
+        date: fields[0]?.trim() || '',
+        reviewType: fields[1]?.trim() || '',
+        review: fields[2]?.trim() || '',
+        rating: parseInt(fields[3]?.trim() || '0') || 0,
+        name: fields[4]?.trim() || '',
+        mobile: fields[5]?.trim() || ''
       };
 
-      if (testimonial.review && testimonial.review.trim() !== '') {
+      // Include ALL reviews, even if review text is empty (might be valid entries)
+      // But skip if ALL fields are empty
+      const isEmpty = !testimonial.date && !testimonial.reviewType && !testimonial.review && 
+                      !testimonial.name && !testimonial.mobile;
+      
+      if (!isEmpty) {
         testimonials.push(testimonial);
+      } else {
+        skippedCount++;
+        skippedReasons['all_fields_empty'] = (skippedReasons['all_fields_empty'] || 0) + 1;
       }
+    }
+    
+    console.log(`Processed ${testimonials.length} testimonials, skipped ${skippedCount} rows`);
+    if (skippedCount > 0) {
+      console.log('Skipped reasons:', skippedReasons);
     }
 
     console.log(`Successfully parsed ${testimonials.length} testimonials from Google Sheets`);
@@ -142,6 +188,9 @@ export async function GET() {
       testimonials: testimonials,
       source: 'google-sheets',
       count: testimonials.length,
+      totalRowsParsed: rows.length,
+      skippedRows: skippedCount,
+      skippedReasons: skippedCount > 0 ? skippedReasons : undefined,
       lastUpdated: new Date().toISOString(),
       workingUrl: workingUrl
     });
