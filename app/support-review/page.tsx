@@ -3,15 +3,13 @@
 import React from "react";
 import { Star, Send } from "lucide-react";
 import { TestimonialsColumn, Testimonial } from "@/components/ui/testimonials-columns-1";
-// import { GOOGLE_SHEETS_CONFIG } from "@/config/google-sheets";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
     console.log('Fetching live testimonials from API...');
     
-    // Fetch from our live API endpoint
     const res = await fetch('/api/live-testimonials', {
-      cache: 'no-store', // Always fetch fresh data
+      cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -28,10 +26,11 @@ async function fetchTestimonials(): Promise<Testimonial[]> {
     if (data.success && data.testimonials) {
       console.log(`Successfully fetched ${data.testimonials.length} live testimonials from ${data.source}`);
       
-      // Sort by date (latest first) - show ALL testimonials
+      // Show all testimonials (not filtered by type)
       const allTestimonials = data.testimonials
         .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+      console.log('Processed all testimonials:', allTestimonials.length);
       return allTestimonials;
     } else {
       console.error('API returned error:', data.error);
@@ -64,26 +63,19 @@ function useTestimonials() {
   }, []);
   
   React.useEffect(() => {
-    // Initial fetch
     fetchData();
-    
-    // Set up auto-refresh every 5 minutes (300000ms)
     const interval = setInterval(() => {
       console.log('Auto-refreshing testimonials...');
       fetchData();
     }, 5 * 60 * 1000);
-    
-    // Cleanup interval on unmount
     return () => clearInterval(interval);
   }, [fetchData]);
   
-  // Also refresh when user focuses the window (in case they were away)
   React.useEffect(() => {
     const handleFocus = () => {
       console.log('Window focused, refreshing testimonials...');
       fetchData();
     };
-    
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [fetchData]);
@@ -91,8 +83,8 @@ function useTestimonials() {
   return { items, loading, lastFetch, refresh: fetchData };
 }
 
-export default function DemoFeedbackPage() {
-  const { items, loading, refresh } = useTestimonials();
+export default function SupportReviewPage() {
+  const { items, loading } = useTestimonials();
   const testimonials = items ?? [];
   
   const [rating, setRating] = React.useState(0);
@@ -112,19 +104,13 @@ export default function DemoFeedbackPage() {
     setIsSubmitting(true);
     
     try {
-      // Direct submission to working API
       const response = await fetch('/api/google-sheets-direct', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          review: review,
-          rating: rating,
-          name: name,
-          mobile: mobile,
-          reviewType: 'Demo Feedback Review'
-        })
+          review, rating, name, mobile,
+          reviewType: 'Support Review'
+        }),
       });
       
       const result = await response.json();
@@ -134,14 +120,8 @@ export default function DemoFeedbackPage() {
       }
       
       console.log('Review submitted successfully:', result);
-      
-      // Reset form
-      setRating(0);
-      setReview("");
-      setName("");
-      setMobile("");
-      
-      alert("Thank you for your feedback! Your review has been automatically added to Google Sheets.");
+      setRating(0); setReview(""); setName(""); setMobile("");
+      alert("Thank you for sharing your feedback!");
       
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -151,11 +131,9 @@ export default function DemoFeedbackPage() {
     }
   };
 
-  // Split all testimonials into 2 columns evenly
   const itemsPerColumn = Math.ceil(testimonials.length / 2);
   const firstColumn = testimonials.slice(0, itemsPerColumn);
   const secondColumn = testimonials.slice(itemsPerColumn);
-
   const [paused, setPaused] = React.useState(false);
 
   if (!mounted) {
@@ -171,11 +149,9 @@ export default function DemoFeedbackPage() {
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      {/* Main Content */}
       <div className="w-full px-2 py-2">
         <div className="flex flex-col lg:grid lg:grid-cols-[60%_40%] gap-4 lg:gap-8 max-w-7xl mx-auto">
           
-          {/* Review Form - First on mobile, Right side on desktop */}
           <div className="flex items-center justify-center order-1 lg:order-2 mb-4 lg:mb-0">
             <div className="relative w-full max-w-[95vw] sm:max-w-md overflow-hidden rounded-2xl shadow-xl">
               <div className="absolute inset-0 z-0">
@@ -184,26 +160,20 @@ export default function DemoFeedbackPage() {
 
               <div className="relative z-10 px-8 pt-8 pb-8 sm:px-12 sm:py-[50px]">
                 <div className="text-center mb-5 -mt-2">
-                  {/* SIT Logo */}
                   <div className="mb-3 flex justify-center">
-                    <img 
-                      src="/sit-logo.png" 
-                      alt="SIT Logo" 
-                      className="w-16 h-16 object-contain"
-                    />
+                    <img src="/sit-logo.png" alt="SIT Logo" className="w-16 h-16 object-contain" />
                   </div>
-                <h1 className="text-2xl font-semibold text-white mb-2 tracking-tighter">Share Your Experience</h1>
+                <h1 className="text-2xl font-semibold text-white mb-2 tracking-tighter">Share Your Support Experience</h1>
                 <p className="text-white/70 text-xs leading-relaxed">
-                  Help us improve by sharing your <span className="text-white">feedback</span>
+                  Help us improve by sharing your <span className="text-white">support experience</span>
                 </p>
                 <div className="mt-4 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Star Rating */}
                 <div>
                   <label className="review-form-label">
-                    How would you rate your demo experience? *
+                    How would you rate your support experience? *
                   </label>
                   <div className="flex items-center justify-start gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -232,10 +202,9 @@ export default function DemoFeedbackPage() {
                   </div>
                 </div>
 
-                {/* Review Text */}
                 <div>
                   <label htmlFor="review" className="review-form-label">
-                    Tell us about your demo experience *
+                    Tell us about your support experience *
                   </label>
                   <textarea
                     id="review"
@@ -248,9 +217,8 @@ export default function DemoFeedbackPage() {
                   />
                 </div>
 
-                {/* Name and Mobile Number - 50% each */}
-                <div className="flex gap-4">
-                  <div className="w-1/2">
+                <div className="flex gap-3">
+                  <div className="flex-1">
                     <label htmlFor="name" className="review-form-label">
                       Your Name *
                     </label>
@@ -264,7 +232,7 @@ export default function DemoFeedbackPage() {
                       required
                     />
                   </div>
-                  <div className="w-1/2">
+                  <div className="flex-1">
                     <label htmlFor="mobile" className="review-form-label">
                       Mobile Number *
                     </label>
@@ -280,45 +248,29 @@ export default function DemoFeedbackPage() {
                   </div>
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || rating === 0 || !review.trim() || !name.trim() || !mobile.trim()}
-                  className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed text-gray-900 font-medium py-3 px-4 rounded-xl transition-all duration-200 shadow-lg border border-gray-200 disabled:opacity-50 text-sm"
+                  disabled={isSubmitting || rating === 0}
+                  className="w-full bg-white text-black py-3 px-6 rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                       Submitting...
-                    </div>
+                    </>
                   ) : (
-                    <div className="flex items-center justify-center gap-1">
+                    <>
                       <Send className="h-4 w-4" />
                       Submit Review
-                    </div>
+                    </>
                   )}
                 </button>
               </form>
 
-              {/* Additional Info */}
-              <div className="mt-5 text-center">
-                <p className="text-white/50 text-xs leading-relaxed">
-                  By submitting, you agree to our{" "}
-                  <a 
-                    href="https://switch2itjobs.com/terms-conditions/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-white/70 hover:text-white underline transition-colors"
-                  >
-                    Terms of Service
-                  </a>
-                  {" "}&{" "}
-                  <a 
-                    href="https://switch2itjobs.com/privacy-policy-2/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-white/70 hover:text-white underline transition-colors"
-                  >
+              <div className="mt-6 text-center">
+                <p className="text-white/60 text-xs">
+                  By submitting, you agree to our{' '}
+                  <a href="#" className="text-white underline hover:text-gray-200">
                     Privacy Policy
                   </a>
                 </p>
@@ -330,7 +282,6 @@ export default function DemoFeedbackPage() {
             </div>
           </div>
 
-          {/* Testimonials - Second on mobile, Left side on desktop */}
           <div className="space-y-4 lg:space-y-6 order-2 lg:order-1">
             {loading ? (
               <div className="flex items-center justify-center py-8">

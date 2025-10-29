@@ -2,99 +2,96 @@
 import React from "react";
 import { TestimonialsColumn, Testimonial } from "@/components/ui/testimonials-columns-1";
 import { motion } from "motion/react";
-import { GOOGLE_SHEETS_CONFIG } from "@/config/google-sheets";
+// import { GOOGLE_SHEETS_CONFIG } from "@/config/google-sheets";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
-    console.log('Fetching testimonials directly from Google Sheets...');
+    console.log('Fetching live testimonials from API...');
     
-    // Fetch directly from Google Sheets CSV
-    const csvUrl = GOOGLE_SHEETS_CONFIG.CSV_URL;
+    // Fetch from our live API endpoint
+    const res = await fetch('/api/live-testimonials', {
+      cache: 'no-store', // Always fetch fresh data
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     
-    const res = await fetch(csvUrl);
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const csv = await res.text();
-    console.log('CSV data received, length:', csv.length);
+    const data = await res.json();
     
-    // Parse CSV data - handle commas in review text properly
-    const rows = csv.split('\n').filter(row => row.trim());
-    const data = rows.slice(1).map(row => {
-      // Split by comma but handle quoted fields properly
-      const fields = [];
-      let current = '';
-      let inQuotes = false;
+    if (data.success && data.testimonials) {
+      console.log(`Successfully fetched ${data.testimonials.length} live testimonials from ${data.source}`);
       
-      for (let i = 0; i < row.length; i++) {
-        const char = row[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          fields.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      fields.push(current.trim()); // Add the last field
-      
-      // Remove quotes from each field
-      const cleanFields = fields.map(field => field.replace(/^"|"$/g, ''));
-      
-      // Expected: Date, Review Type, Review, Rating, Name, Mobile Number
-      const [date, reviewType, review, rating, name, mobile] = cleanFields;
-      
-      return {
-        date: date || '',
-        reviewType: reviewType || '',
-        review: review || '',
-        rating: Number(rating) || 0,
-        name: name || ''
-      };
-    }).filter(item => item.name && item.review);
-    
-    console.log('Parsed testimonials:', data.length);
-    
-    // Sort by date (latest first) and limit to 9
-    const sortedTestimonials = data
-      .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 9);
+      // Sort by date (latest first) - show ALL testimonials
+      const sortedTestimonials = data.testimonials
+        .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    console.log('Processed testimonials:', sortedTestimonials.length);
-    return sortedTestimonials;
-  } catch (error) {
-    console.error('Error fetching testimonials from Google Sheets:', error);
+      console.log('Processed testimonials:', sortedTestimonials.length);
+      return sortedTestimonials;
+    } else {
+      console.error('API returned error:', data.error);
+      return [];
+    }
     
-    // Return empty array instead of dummy data
-    console.log('No testimonials available from Google Sheets');
+  } catch (error) {
+    console.error('Error fetching live testimonials:', error);
     return [];
   }
 }
 
 
-// Simple client loader component
+// Simple client loader component with auto-refresh
 function useTestimonials() {
   const [items, setItems] = React.useState<Testimonial[] | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [lastFetch, setLastFetch] = React.useState<Date | null>(null);
   
-  React.useEffect(() => {
-    console.log('useTestimonials: Starting to fetch...');
-    fetchTestimonials()
-      .then((data) => {
-        console.log('useTestimonials: Data received:', data.length, 'items');
-        setItems(data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('useTestimonials: Error:', error);
-        setItems([]);
-        setLoading(false);
-      });
+  const fetchData = React.useCallback(async () => {
+    try {
+      console.log('useTestimonials: Refreshing data...');
+      const data = await fetchTestimonials();
+      console.log('useTestimonials: Data received:', data.length, 'items');
+      setItems(data);
+      setLastFetch(new Date());
+      setLoading(false);
+    } catch (error) {
+      console.error('useTestimonials: Error:', error);
+      setItems([]);
+      setLoading(false);
+    }
   }, []);
   
-  return { items, loading };
+  React.useEffect(() => {
+    // Initial fetch
+    fetchData();
+    
+    // Set up auto-refresh every 5 minutes (300000ms)
+    const interval = setInterval(() => {
+      console.log('useTestimonials: Auto-refreshing...');
+      fetchData();
+    }, 5 * 60 * 1000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
+  }, [fetchData]);
+  
+  // Also refresh when user focuses the window
+  React.useEffect(() => {
+    const handleFocus = () => {
+      console.log('useTestimonials: Window focused, refreshing...');
+      fetchData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [fetchData]);
+  
+  return { items, loading, lastFetch, refresh: fetchData };
 }
 
 function badgeClass(type?: string): string {
@@ -103,6 +100,9 @@ function badgeClass(type?: string): string {
   if (t.includes("sales")) return "bg-yellow-50 text-yellow-800 border-yellow-200";
   if (t.includes("support")) return "bg-blue-50 text-blue-800 border-blue-200";
   if (t.includes("course")) return "bg-orange-50 text-orange-800 border-orange-200";
+  if (t.includes("classes")) return "bg-purple-50 text-purple-800 border-purple-200";
+  if (t.includes("placement")) return "bg-pink-50 text-pink-800 border-pink-200";
+  if (t.includes("enrollment")) return "bg-indigo-50 text-indigo-800 border-indigo-200";
   return "bg-neutral-50 text-neutral-700 border-neutral-200";
 }
 
@@ -110,9 +110,19 @@ const Testimonials: React.FC = () => {
   const { items, loading } = useTestimonials();
   const testimonials = items ?? [];
   const allTypes = React.useMemo(
-    () => Array.from(new Set(testimonials.map((t) => t.reviewType).filter(Boolean))),
+    () => Array.from(new Set(testimonials.map((t) => t.reviewType).filter(Boolean)))
+      .filter(type => 
+        type !== 'Course Review' && 
+        type !== 'Sales Closure Review'
+      ),
     [testimonials],
   );
+
+  // Calculate counts for each filter type
+  const getCountForType = (type: string) => {
+    if (type === "ALL") return testimonials.length;
+    return testimonials.filter(t => t.reviewType === type).length;
+  };
 
   type Selection = "ALL" | string;
   const [selected, setSelected] = React.useState<Selection>("ALL");
@@ -139,9 +149,11 @@ const Testimonials: React.FC = () => {
     });
   }, [testimonials, selected]);
 
-  const firstColumn = filtered.slice(0, 3);
-  const secondColumn = filtered.slice(3, 6);
-  const thirdColumn = filtered.slice(6, 9);
+  // Split all testimonials into 3 columns evenly
+  const itemsPerColumn = Math.ceil(filtered.length / 3);
+  const firstColumn = filtered.slice(0, itemsPerColumn);
+  const secondColumn = filtered.slice(itemsPerColumn, itemsPerColumn * 2);
+  const thirdColumn = filtered.slice(itemsPerColumn * 2);
 
   const [paused, setPaused] = React.useState(false);
 
@@ -215,7 +227,7 @@ const Testimonials: React.FC = () => {
                   : "opacity-70 hover:opacity-100"
               } ${badgeClass("all")}`}
             >
-              All
+              All ({getCountForType("ALL")})
             </button>
             {allTypes.map((t) => {
               const active = selected === t;
@@ -231,7 +243,7 @@ const Testimonials: React.FC = () => {
                       : "opacity-70 hover:opacity-100"
                   } ${badgeClass(t)}`}
                 >
-                  {t}
+                  {t} ({getCountForType(t)})
                 </button>
               );
             })}
@@ -243,9 +255,9 @@ const Testimonials: React.FC = () => {
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          <TestimonialsColumn testimonials={firstColumn} duration={15} paused={paused} />
-          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={19} paused={paused} />
-          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={17} paused={paused} />
+          <TestimonialsColumn testimonials={firstColumn} paused={paused} />
+          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" paused={paused} />
+          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" paused={paused} />
         </div>
       </div>
     </section>

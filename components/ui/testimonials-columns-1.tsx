@@ -23,6 +23,19 @@ type TestimonialsColumnProps = {
 export const TestimonialsColumn: React.FC<TestimonialsColumnProps> = (
   props,
 ) => {
+  // Calculate duration based on content height for constant visual speed
+  // Base speed: 1000ms per 100px of content height
+  const baseSpeed = 1000; // milliseconds per 100px
+  const testimonialsCount = props.testimonials.length;
+  const duplicatedCount = testimonialsCount * 2; // We duplicate the content
+  
+  // Estimate height: each testimonial is ~200px + gaps
+  const estimatedHeightPerTestimonial = 220;
+  const totalHeight = duplicatedCount * estimatedHeightPerTestimonial;
+  
+  // Calculate duration to maintain constant speed
+  const calculatedDuration = Math.max(10, (totalHeight / 100) * (baseSpeed / 1000));
+
   function avatarForName(name: string | undefined, index: number): string {
     const femaleUrls = [
       "https://bundui-images.netlify.app/avatars/01.png",
@@ -105,7 +118,7 @@ export const TestimonialsColumn: React.FC<TestimonialsColumnProps> = (
       <motion.div
         animate={props.paused ? undefined : { translateY: "-50%" }}
         transition={props.paused ? undefined : {
-          duration: props.duration || 10,
+          duration: calculatedDuration,
           repeat: Infinity,
           ease: "linear",
           repeatType: "loop",

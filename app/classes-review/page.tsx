@@ -3,7 +3,6 @@
 import React from "react";
 import { Star, Send } from "lucide-react";
 import { TestimonialsColumn, Testimonial } from "@/components/ui/testimonials-columns-1";
-// import { GOOGLE_SHEETS_CONFIG } from "@/config/google-sheets";
 
 async function fetchTestimonials(): Promise<Testimonial[]> {
   try {
@@ -28,10 +27,11 @@ async function fetchTestimonials(): Promise<Testimonial[]> {
     if (data.success && data.testimonials) {
       console.log(`Successfully fetched ${data.testimonials.length} live testimonials from ${data.source}`);
       
-      // Sort by date (latest first) - show ALL testimonials
+      // Show all testimonials (not filtered by type)
       const allTestimonials = data.testimonials
         .sort((a: Testimonial, b: Testimonial) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+      console.log('Processed all testimonials:', allTestimonials.length);
       return allTestimonials;
     } else {
       console.error('API returned error:', data.error);
@@ -64,8 +64,7 @@ function useTestimonials() {
   }, []);
   
   React.useEffect(() => {
-    // Initial fetch
-    fetchData();
+    fetchData(); // Initial fetch
     
     // Set up auto-refresh every 5 minutes (300000ms)
     const interval = setInterval(() => {
@@ -73,8 +72,7 @@ function useTestimonials() {
       fetchData();
     }, 5 * 60 * 1000);
     
-    // Cleanup interval on unmount
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // Cleanup
   }, [fetchData]);
   
   // Also refresh when user focuses the window (in case they were away)
@@ -91,8 +89,8 @@ function useTestimonials() {
   return { items, loading, lastFetch, refresh: fetchData };
 }
 
-export default function DemoFeedbackPage() {
-  const { items, loading, refresh } = useTestimonials();
+export default function ClassesReviewPage() {
+  const { items, loading } = useTestimonials();
   const testimonials = items ?? [];
   
   const [rating, setRating] = React.useState(0);
@@ -112,19 +110,18 @@ export default function DemoFeedbackPage() {
     setIsSubmitting(true);
     
     try {
-      // Direct submission to working API
       const response = await fetch('/api/google-sheets-direct', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          review: review,
-          rating: rating,
-          name: name,
-          mobile: mobile,
-          reviewType: 'Demo Feedback Review'
-        })
+          review,
+          rating,
+          name,
+          mobile,
+          reviewType: 'Classes Review'
+        }),
       });
       
       const result = await response.json();
@@ -141,7 +138,7 @@ export default function DemoFeedbackPage() {
       setName("");
       setMobile("");
       
-      alert("Thank you for your feedback! Your review has been automatically added to Google Sheets.");
+      alert("Thank you for sharing your feedback!");
       
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -192,9 +189,9 @@ export default function DemoFeedbackPage() {
                       className="w-16 h-16 object-contain"
                     />
                   </div>
-                <h1 className="text-2xl font-semibold text-white mb-2 tracking-tighter">Share Your Experience</h1>
+                <h1 className="text-2xl font-semibold text-white mb-2 tracking-tighter">Share Your Classes Experience</h1>
                 <p className="text-white/70 text-xs leading-relaxed">
-                  Help us improve by sharing your <span className="text-white">feedback</span>
+                  Help us improve by sharing your <span className="text-white">classes experience</span>
                 </p>
                 <div className="mt-4 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
               </div>
@@ -203,7 +200,7 @@ export default function DemoFeedbackPage() {
                 {/* Star Rating */}
                 <div>
                   <label className="review-form-label">
-                    How would you rate your demo experience? *
+                    How would you rate your classes experience? *
                   </label>
                   <div className="flex items-center justify-start gap-1">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -235,7 +232,7 @@ export default function DemoFeedbackPage() {
                 {/* Review Text */}
                 <div>
                   <label htmlFor="review" className="review-form-label">
-                    Tell us about your demo experience *
+                    Tell us about your classes experience *
                   </label>
                   <textarea
                     id="review"
@@ -249,8 +246,8 @@ export default function DemoFeedbackPage() {
                 </div>
 
                 {/* Name and Mobile Number - 50% each */}
-                <div className="flex gap-4">
-                  <div className="w-1/2">
+                <div className="flex gap-3">
+                  <div className="flex-1">
                     <label htmlFor="name" className="review-form-label">
                       Your Name *
                     </label>
@@ -264,7 +261,7 @@ export default function DemoFeedbackPage() {
                       required
                     />
                   </div>
-                  <div className="w-1/2">
+                  <div className="flex-1">
                     <label htmlFor="mobile" className="review-form-label">
                       Mobile Number *
                     </label>
@@ -283,42 +280,27 @@ export default function DemoFeedbackPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting || rating === 0 || !review.trim() || !name.trim() || !mobile.trim()}
-                  className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed text-gray-900 font-medium py-3 px-4 rounded-xl transition-all duration-200 shadow-lg border border-gray-200 disabled:opacity-50 text-sm"
+                  disabled={isSubmitting || rating === 0}
+                  className="w-full bg-white text-black py-3 px-6 rounded-lg font-semibold text-sm transition-all duration-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
-                    <div className="flex items-center justify-center gap-1">
-                      <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                       Submitting...
-                    </div>
+                    </>
                   ) : (
-                    <div className="flex items-center justify-center gap-1">
+                    <>
                       <Send className="h-4 w-4" />
                       Submit Review
-                    </div>
+                    </>
                   )}
                 </button>
               </form>
 
-              {/* Additional Info */}
-              <div className="mt-5 text-center">
-                <p className="text-white/50 text-xs leading-relaxed">
-                  By submitting, you agree to our{" "}
-                  <a 
-                    href="https://switch2itjobs.com/terms-conditions/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-white/70 hover:text-white underline transition-colors"
-                  >
-                    Terms of Service
-                  </a>
-                  {" "}&{" "}
-                  <a 
-                    href="https://switch2itjobs.com/privacy-policy-2/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-white/70 hover:text-white underline transition-colors"
-                  >
+              <div className="mt-6 text-center">
+                <p className="text-white/60 text-xs">
+                  By submitting, you agree to our{' '}
+                  <a href="#" className="text-white underline hover:text-gray-200">
                     Privacy Policy
                   </a>
                 </p>
