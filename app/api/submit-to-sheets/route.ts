@@ -1,41 +1,75 @@
 import { NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const today = new Date();
-    const formattedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+    
+    // Validate required fields
+    if (!data.review || !data.rating || !data.name || !data.mobile) {
+      return NextResponse.json(
+        { success: false, message: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
-    const rowData = [
-      formattedDate,
-      'Demo Feedback Review',
-      data.review || '',
-      data.rating || 0,
-      data.name || '',
-      data.mobile || ''
-    ];
+    // Validate rating range
+    const rating = parseInt(data.rating);
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { success: false, message: 'Rating must be between 1 and 5' },
+        { status: 400 }
+      );
+    }
 
-    // For now, we'll log the data and return success
-    // In production, you would integrate with Google Sheets API here
-    console.log('=== FORM SUBMISSION RECEIVED ===');
-    console.log('Date:', rowData[0]);
-    console.log('Review Type:', rowData[1]);
-    console.log('Review:', rowData[2]);
-    console.log('Rating:', rowData[3]);
-    console.log('Name:', rowData[4]);
-    console.log('Mobile:', rowData[5]);
-    console.log('===============================');
+    // Create Supabase client
+    const supabase = createServerClient();
+
+    // Insert testimonial into Supabase
+    const { data: testimonial, error } = await supabase
+      .from('testimonials')
+      .insert({
+        review_type: data.reviewType || 'Demo Feedback Review',
+        review: data.review,
+        rating: rating,
+        name: data.name,
+        mobile: data.mobile,
+        published: true,
+        source: 'web'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return NextResponse.json({
+        success: false,
+        message: 'Error saving testimonial to database',
+        error: error.message
+      }, { status: 500 });
+    }
+
+    console.log('=== FORM SUBMISSION RECEIVED AND SAVED TO SUPABASE ===');
+    console.log('Testimonial ID:', testimonial.id);
+    console.log('Date:', testimonial.date);
+    console.log('Review Type:', testimonial.review_type);
+    console.log('Review:', testimonial.review);
+    console.log('Rating:', testimonial.rating);
+    console.log('Name:', testimonial.name);
+    console.log('Mobile:', testimonial.mobile);
+    console.log('=====================================================');
 
     return NextResponse.json({
       success: true,
       message: 'Review submitted successfully!',
       data: {
-        date: rowData[0],
-        reviewType: rowData[1],
-        review: rowData[2],
-        rating: rowData[3],
-        name: rowData[4],
-        mobile: rowData[5]
+        id: testimonial.id,
+        date: testimonial.date,
+        reviewType: testimonial.review_type,
+        review: testimonial.review,
+        rating: testimonial.rating,
+        name: testimonial.name,
+        mobile: testimonial.mobile
       }
     });
   } catch (error: unknown) {
