@@ -67,11 +67,11 @@ function useTestimonials() {
     // Initial fetch
     fetchData();
     
-    // Set up auto-refresh every 5 minutes (300000ms)
+    // Set up auto-refresh every 30 seconds for real-time updates
     const interval = setInterval(() => {
-      console.log('Auto-refreshing testimonials...');
+      console.log('Auto-refreshing testimonials (real-time)...');
       fetchData();
-    }, 5 * 60 * 1000);
+    }, 30 * 1000); // 30 seconds for near real-time updates
     
     // Cleanup interval on unmount
     return () => clearInterval(interval);

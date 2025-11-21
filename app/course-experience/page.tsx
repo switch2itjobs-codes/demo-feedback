@@ -64,10 +64,11 @@ function useTestimonials() {
   
   React.useEffect(() => {
     fetchData();
+    // Set up auto-refresh every 30 seconds for real-time updates
     const interval = setInterval(() => {
-      console.log('Auto-refreshing testimonials...');
+      console.log('Auto-refreshing testimonials (real-time)...');
       fetchData();
-    }, 5 * 60 * 1000);
+    }, 30 * 1000); // 30 seconds for near real-time updates
     return () => clearInterval(interval);
   }, [fetchData]);
   

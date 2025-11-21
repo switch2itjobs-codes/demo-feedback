@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 
-// Revalidate this route every 5 minutes
-export const revalidate = 300;
+// Disable caching - always fetch fresh data from Supabase
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
-    console.log('=== FETCHING LIVE TESTIMONIALS FROM SUPABASE ===');
+    console.log('=== FETCHING LIVE TESTIMONIALS FROM SUPABASE (REAL-TIME) ===');
     
     // Create Supabase client
     const supabase = createServerClient();
 
-    // Fetch published testimonials from Supabase, sorted by date (fallback created_at) descending
-    // Note: Supabase supports multiple order() calls, but we'll sort by date first, then created_at
+    // Fetch ALL published testimonials from Supabase, sorted by date (fallback created_at) descending
+    // No limit - fetch all testimonials dynamically
     const { data: testimonials, error } = await supabase
       .from('testimonials')
       .select('id, date, review_type, review, rating, name, mobile, image, created_at')
       .eq('published', true)
-      .order('date', { ascending: false })
+      .order('date', { ascending: false, nullsLast: true })
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -62,8 +63,11 @@ export async function GET() {
       lastUpdated: new Date().toISOString()
     }, {
       headers: {
-        // Cache at edge/browsers for 5 minutes as well
-        'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60',
+        // No caching - always fetch fresh data
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store',
       },
     });
 
