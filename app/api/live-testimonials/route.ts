@@ -18,7 +18,7 @@ export async function GET() {
       .from('testimonials')
       .select('id, date, review_type, review, rating, name, mobile, image, created_at')
       .eq('published', true)
-      .order('date', { ascending: false, nullsLast: true })
+      .order('date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
     if (error) {
